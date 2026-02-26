@@ -1,0 +1,30 @@
+{
+  "A photograph of a cat sitting on a windowsill": {
+    "full": 0.3072720170021057,
+    "early_only": 0.10833374410867691,
+    "mid_only": 0.16588495671749115,
+    "late_only": 0.22781774401664734,
+    "none": 0.14811167120933533
+  },
+  "A red sports car on a mountain road": {
+    "full": 0.290729284286499,
+    "early_only": 0.2277679145336151,
+    "mid_only": 0.10935834050178528,
+    "late_only": 0.0785013735294342,
+    "none": 0.019276969134807587
+  },
+  "A watercolor painting of a sunset over the ocean": {
+    "full": 0.20324787497520447,
+    "early_only": 0.14093057811260223,
+    "mid_only": 0.2733955979347229,
+    "late_only": 0.1428574174642563,
+    "none": 0.07178822159767151
+  },
+  "An astronaut riding a horse on the moon": {
+    "full": 0.21695250272750854,
+    "early_only": 0.18766561150550842,
+    "mid_only": 0.22679680585861206,
+    "late_only": 0.16123969852924347,
+    "none": 0.13588494062423706
+  }
+}

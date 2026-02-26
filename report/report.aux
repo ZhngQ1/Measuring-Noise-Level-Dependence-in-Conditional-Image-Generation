@@ -1,0 +1,99 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyperFirstAtBeginDocument{\AtBeginDocument}
+\HyperFirstAtBeginDocument{\ifx\hyper@anchor\@undefined
+\global\let\oldcontentsline\contentsline
+\gdef\contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
+\global\let\oldnewlabel\newlabel
+\gdef\newlabel#1#2{\newlabelxx{#1}#2}
+\gdef\newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
+\AtEndDocument{\ifx\hyper@anchor\@undefined
+\let\contentsline\oldcontentsline
+\let\newlabel\oldnewlabel
+\fi}
+\fi}
+\global\let\hyper@last\relax 
+\gdef\HyperFirstAtBeginDocument#1{#1}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{ho2020denoising,rombach2022high}
+\citation{rombach2022high}
+\citation{song2021denoising}
+\citation{ho2020denoising}
+\citation{song2021scorebased}
+\citation{rombach2022high}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{1}{1}{Introduction}{section.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{1}{section.2}\protected@file@percent }
+\newlabel{sec:related}{{2}{1}{Related Work}{section.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Diffusion models for image generation.}{1}{section*.2}\protected@file@percent }
+\citation{rombach2022high}
+\citation{ho2022classifier}
+\citation{zhang2023adding}
+\citation{hertz2022prompt}
+\citation{ho2022classifier}
+\citation{song2021denoising}
+\@writefile{toc}{\contentsline {paragraph}{Conditional and controlled generation.}{2}{section*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Inference-time behavior in generative models.}{2}{section*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Mathematical Background}{2}{section.3}\protected@file@percent }
+\newlabel{sec:background}{{3}{2}{Mathematical Background}{section.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Forward diffusion process.}{2}{section*.5}\protected@file@percent }
+\newlabel{eq:forward}{{1}{2}{Forward diffusion process}{equation.3.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Reverse process and noise prediction.}{2}{section*.6}\protected@file@percent }
+\newlabel{eq:noise_pred}{{2}{2}{Reverse process and noise prediction}{equation.3.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Classifier-free guidance (CFG).}{2}{section*.7}\protected@file@percent }
+\newlabel{eq:cfg}{{3}{2}{Classifier-free guidance (CFG)}{equation.3.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{DDIM sampling.}{2}{section*.8}\protected@file@percent }
+\newlabel{eq:tweedie}{{4}{2}{DDIM sampling}{equation.3.4}{}}
+\newlabel{eq:ddim_step}{{5}{2}{DDIM sampling}{equation.3.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Proposed Method: Metrics and Interventions}{2}{section.4}\protected@file@percent }
+\newlabel{sec:method}{{4}{2}{Proposed Method: Metrics and Interventions}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Conditioning Influence Score (CIS)}{2}{subsection.4.1}\protected@file@percent }
+\newlabel{eq:cis}{{6}{2}{Conditioning Influence Score (CIS)}{equation.4.6}{}}
+\citation{radford2021learning}
+\citation{rombach2022high}
+\citation{radford2021learning}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Trajectory Sensitivity (TS)}{3}{subsection.4.2}\protected@file@percent }
+\newlabel{eq:ts}{{7}{3}{Trajectory Sensitivity (TS)}{equation.4.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Semantic Alignment Score (SAS)}{3}{subsection.4.3}\protected@file@percent }
+\newlabel{eq:sas}{{8}{3}{Semantic Alignment Score (SAS)}{equation.4.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Selective Conditioning Intervention}{3}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Experimental Setup}{3}{subsection.4.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Preliminary Results}{3}{section.5}\protected@file@percent }
+\newlabel{sec:results}{{5}{3}{Preliminary Results}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Conditioning Influence Score}{3}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Selective Conditioning Intervention}{3}{subsection.5.2}\protected@file@percent }
+\citation{radford2021learning}
+\citation{zhang2023adding}
+\bibstyle{plainnat}
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:cis}{{1a}{4}{CIS across denoising steps (mean $\pm $ std over 8 prompts).\relax }{figure.caption.9}{}}
+\newlabel{sub@fig:cis}{{a}{4}{CIS across denoising steps (mean $\pm $ std over 8 prompts).\relax }{figure.caption.9}{}}
+\newlabel{fig:gs}{{1b}{4}{CIS under guidance scales $w \in \{3, 7.5, 15\}$.\relax }{figure.caption.9}{}}
+\newlabel{sub@fig:gs}{{b}{4}{CIS under guidance scales $w \in \{3, 7.5, 15\}$.\relax }{figure.caption.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Conditioning Influence Score analysis. (a)\nobreakspace  {}CIS peaks in the early-to-mid denoising phase, indicating conditioning exerts its strongest instantaneous influence at intermediate noise levels. (b)\nobreakspace  {}Higher guidance scales amplify CIS uniformly but preserve the temporal profile, confirming that the noise-level dependence is a structural property.\relax }}{4}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:cis_combined}{{1}{4}{Conditioning Influence Score analysis. (a)~CIS peaks in the early-to-mid denoising phase, indicating conditioning exerts its strongest instantaneous influence at intermediate noise levels. (b)~Higher guidance scales amplify CIS uniformly but preserve the temporal profile, confirming that the noise-level dependence is a structural property.\relax }{figure.caption.9}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces CLIP scores (image--text similarity) under selective conditioning. Higher is better.\relax }}{4}{table.caption.10}\protected@file@percent }
+\newlabel{tab:selective}{{1}{4}{CLIP scores (image--text similarity) under selective conditioning. Higher is better.\relax }{table.caption.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Trajectory Sensitivity and Semantic Alignment}{4}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Discussion}{4}{section.6}\protected@file@percent }
+\newlabel{sec:discussion}{{6}{4}{Discussion}{section.6}{}}
+\@writefile{toc}{\contentsline {paragraph}{Novelty.}{4}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Advantages.}{4}{section*.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Limitations.}{4}{section*.14}\protected@file@percent }
+\bibcite{ho2020denoising}{{1}{2020}{{Ho et~al.}}{{}}}
+\bibcite{song2021denoising}{{2}{2021a}{{Song et~al.}}{{}}}
+\bibcite{song2021scorebased}{{3}{2021b}{{Song et~al.}}{{}}}
+\bibcite{rombach2022high}{{4}{2022}{{Rombach et~al.}}{{}}}
+\bibcite{ho2022classifier}{{5}{2022}{{Ho and Salimans}}{{}}}
+\bibcite{hertz2022prompt}{{6}{2022}{{Hertz et~al.}}{{}}}
+\bibcite{zhang2023adding}{{7}{2023}{{Zhang et~al.}}{{}}}
+\bibcite{radford2021learning}{{8}{2021}{{Radford et~al.}}{{}}}
+\newlabel{fig:ts}{{2a}{5}{Trajectory divergence between paired prompts.\relax }{figure.caption.11}{}}
+\newlabel{sub@fig:ts}{{a}{5}{Trajectory divergence between paired prompts.\relax }{figure.caption.11}{}}
+\newlabel{fig:sas}{{2b}{5}{Semantic Alignment Score across steps.\relax }{figure.caption.11}{}}
+\newlabel{sub@fig:sas}{{b}{5}{Semantic Alignment Score across steps.\relax }{figure.caption.11}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces (a)\nobreakspace  {}Trajectory Sensitivity: latent divergence between prompt pairs sharing initial noise. Steepest divergence in steps 5--25. (b)\nobreakspace  {}SAS: CLIP similarity between predicted $\hat  {\mathbf  {x}}_0(t)$ and prompt. Alignment emerges rapidly in early steps.\relax }}{5}{figure.caption.11}\protected@file@percent }
+\newlabel{fig:ts_sas}{{2}{5}{(a)~Trajectory Sensitivity: latent divergence between prompt pairs sharing initial noise. Steepest divergence in steps 5--25. (b)~SAS: CLIP similarity between predicted $\hat {\mathbf {x}}_0(t)$ and prompt. Alignment emerges rapidly in early steps.\relax }{figure.caption.11}{}}
+\@writefile{toc}{\contentsline {paragraph}{Next steps.}{5}{section*.15}\protected@file@percent }
+\gdef \@abspage@last{5}

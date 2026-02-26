@@ -1,0 +1,304 @@
+\documentclass{article}
+
+\usepackage[main, final]{Styles/neurips_2025}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{enumitem}
+
+\setlength{\textfloatsep}{6pt plus 2pt minus 2pt}
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\intextsep}{6pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{4pt}
+\setlength{\belowcaptionskip}{2pt}
+
+\title{Measuring Noise-Level Dependence in Conditional Image Generation}
+
+\author{%
+  Qile Zhang \\
+  Department of ECE \\
+  University of California, San Diego \\
+  \texttt{qiz092@ucsd.edu} \\
+  \And
+  Wuxi Chen \\
+  Department of ECE \\
+  University of California, San Diego \\
+  \texttt{wuchen@ucsd.edu} \\
+}
+
+\begin{document}
+\maketitle
+
+% ===========================================================================
+\begin{abstract}
+We study how the effectiveness of conditioning in diffusion models depends on noise level during inference. Through controlled inference-time interventions and quantitative diagnostics, we analyze how conditioning influences generation dynamics at different timesteps. We define three complementary metrics---Conditioning Influence Score (CIS), Trajectory Sensitivity (TS), and Semantic Alignment Score (SAS)---and evaluate them across the full reverse diffusion process of Stable Diffusion 1.5 using DDIM sampling. Our selective conditioning experiments reveal that conditioning is not equally influential at all noise levels: early and mid-stage conditioning disproportionately shapes global structure and semantic content, while late-stage conditioning primarily refines details. These findings provide principled insights for more efficient inference-time control without modifying model architectures or training procedures.
+\end{abstract}
+
+% ===========================================================================
+\section{Introduction}
+\label{sec:intro}
+% ===========================================================================
+
+Diffusion models have become a powerful framework for image generation, and conditional diffusion models enable controllable synthesis through auxiliary signals such as text prompts or structural constraints~\citep{ho2020denoising, rombach2022high}. Despite their widespread use, the inference dynamics of conditional diffusion models remain poorly understood. In particular, conditioning is typically applied uniformly across all reverse diffusion steps, implicitly assuming a consistent influence across different noise levels.
+
+This assumption is questionable: the reverse diffusion process spans qualitatively different regimes, from coarse structure formation at early stages (high noise) to fine-grained detail refinement at later stages (low noise). Understanding \emph{when} conditioning matters most during this process has both scientific and practical value.
+
+We address three specific research questions:
+\begin{enumerate}[nosep, leftmargin=*]
+    \item At which stages does conditioning meaningfully influence generation outcomes?
+    \item Are there noise-level regimes where conditioning becomes ineffective or overly dominant?
+    \item Do different types of conditioning perturbations exhibit distinct noise-level dependencies?
+\end{enumerate}
+
+To answer these questions, we propose a measurement framework consisting of three quantitative metrics and a set of controlled inference-time interventions, evaluated on Stable Diffusion 1.5~\citep{rombach2022high} with DDIM sampling~\citep{song2021denoising}. Our approach requires no model modification or retraining---it operates entirely at inference time.
+
+% ===========================================================================
+\section{Related Work}
+\label{sec:related}
+% ===========================================================================
+
+\paragraph{Diffusion models for image generation.}
+Denoising diffusion probabilistic models (DDPMs)~\citep{ho2020denoising} generate data by iteratively denoising samples from a simple noise distribution and have achieved strong performance in image generation. Score-based formulations~\citep{song2021scorebased} provide a continuous-time perspective. Latent diffusion models (LDMs)~\citep{rombach2022high} further enable high-resolution synthesis with tractable computational costs by operating in a compressed latent space.
+
+\paragraph{Conditional and controlled generation.}
+Conditional diffusion models incorporate auxiliary signals to guide generation, commonly via cross-attention~\citep{rombach2022high}, classifier-free guidance (CFG)~\citep{ho2022classifier}, or control networks~\citep{zhang2023adding}. CFG in particular has become the standard technique for trading off diversity and fidelity. In practice, conditioning is typically applied uniformly across all diffusion steps.
+
+\paragraph{Inference-time behavior in generative models.}
+Recent studies explore inference-time interventions such as prompt manipulation and attention editing. Prompt-to-Prompt~\citep{hertz2022prompt} demonstrates that cross-attention maps at different timesteps control different aspects of the generated image, suggesting that the timing of conditioning matters. However, existing work focuses on specific editing techniques rather than providing a general, quantitative characterization of conditioning effectiveness across noise levels.
+
+% ===========================================================================
+\section{Mathematical Background}
+\label{sec:background}
+% ===========================================================================
+
+\paragraph{Forward diffusion process.}
+Given a data sample $\mathbf{x}_0 \sim q(\mathbf{x}_0)$, the forward process adds Gaussian noise over $T$ timesteps according to a variance schedule $\{\beta_t\}_{t=1}^{T}$:
+\begin{equation}
+    q(\mathbf{x}_t \mid \mathbf{x}_0) = \mathcal{N}\!\left(\mathbf{x}_t;\, \sqrt{\bar{\alpha}_t}\, \mathbf{x}_0,\, (1 - \bar{\alpha}_t)\, \mathbf{I}\right),
+    \label{eq:forward}
+\end{equation}
+where $\alpha_t = 1 - \beta_t$ and $\bar{\alpha}_t = \prod_{s=1}^{t} \alpha_s$.
+
+\paragraph{Reverse process and noise prediction.}
+A neural network $\boldsymbol{\epsilon}_\theta$ is trained to predict the noise $\boldsymbol{\epsilon}$ added at each timestep. In the conditional setting, the model takes additional input $\mathbf{c}$ (e.g., a text embedding):
+\begin{equation}
+    \boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t, \mathbf{c}) \approx \boldsymbol{\epsilon}.
+    \label{eq:noise_pred}
+\end{equation}
+
+\paragraph{Classifier-free guidance (CFG).}
+CFG~\citep{ho2022classifier} interpolates between unconditional and conditional predictions:
+\begin{equation}
+    \tilde{\boldsymbol{\epsilon}}_\theta(\mathbf{x}_t, t, \mathbf{c}) = \boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t, \varnothing) + w \cdot \bigl[\boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t, \mathbf{c}) - \boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t, \varnothing)\bigr],
+    \label{eq:cfg}
+\end{equation}
+where $w > 1$ is the guidance scale and $\varnothing$ denotes the null (unconditional) prompt. The term in brackets, $\boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t, \mathbf{c}) - \boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t, \varnothing)$, represents the \emph{conditioning direction}---the direction in noise space induced by the conditioning signal at timestep $t$.
+
+\paragraph{DDIM sampling.}
+DDIM~\citep{song2021denoising} provides a deterministic sampling procedure. Given the predicted noise $\tilde{\boldsymbol{\epsilon}}_\theta$ at timestep $t$, the predicted clean image is:
+\begin{equation}
+    \hat{\mathbf{x}}_0(t) = \frac{\mathbf{x}_t - \sqrt{1 - \bar{\alpha}_t}\, \tilde{\boldsymbol{\epsilon}}_\theta}{\sqrt{\bar{\alpha}_t}},
+    \label{eq:tweedie}
+\end{equation}
+and the next latent is computed as:
+\begin{equation}
+    \mathbf{x}_{t-1} = \sqrt{\bar{\alpha}_{t-1}}\, \hat{\mathbf{x}}_0(t) + \sqrt{1 - \bar{\alpha}_{t-1}}\, \tilde{\boldsymbol{\epsilon}}_\theta.
+    \label{eq:ddim_step}
+\end{equation}
+
+% ===========================================================================
+\section{Proposed Method: Metrics and Interventions}
+\label{sec:method}
+% ===========================================================================
+
+We propose three complementary metrics to quantify conditioning effectiveness at each timestep, along with a selective conditioning intervention protocol.
+
+\subsection{Conditioning Influence Score (CIS)}
+
+The CIS measures the magnitude of the conditioning direction at each timestep:
+\begin{equation}
+    \text{CIS}(t) = \left\| \boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t, \mathbf{c}) - \boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t, \varnothing) \right\|_2.
+    \label{eq:cis}
+\end{equation}
+A high CIS indicates that conditioning strongly alters the predicted noise at timestep $t$, while a low CIS suggests the model's prediction is similar regardless of whether conditioning is applied. This metric directly measures the \emph{instantaneous} influence of conditioning on the denoising step.
+
+\subsection{Trajectory Sensitivity (TS)}
+
+The TS metric measures how sensitive the denoising trajectory is to changes in the conditioning signal. Given two semantically related prompts $\mathbf{c}$ and $\mathbf{c}'$ (e.g., ``a \textit{red} car'' vs.\ ``a \textit{blue} car'') and the \emph{same} initial noise $\mathbf{x}_T$, we run parallel denoising and measure:
+\begin{equation}
+    \text{TS}(t) = \left\| \mathbf{x}_{t-1}^{(\mathbf{c})} - \mathbf{x}_{t-1}^{(\mathbf{c}')} \right\|_2,
+    \label{eq:ts}
+\end{equation}
+where $\mathbf{x}_{t-1}^{(\mathbf{c})}$ denotes the latent obtained by denoising with prompt $\mathbf{c}$. TS captures the \emph{cumulative} divergence caused by conditioning differences, complementing the instantaneous measure of CIS.
+
+\subsection{Semantic Alignment Score (SAS)}
+
+The SAS tracks how quickly the generated image becomes semantically aligned with the text prompt during denoising. At each timestep $t$, we compute the predicted clean image $\hat{\mathbf{x}}_0(t)$ via Eq.~\eqref{eq:tweedie} and decode it to pixel space, then measure:
+\begin{equation}
+    \text{SAS}(t) = \text{CLIP\_sim}\!\left(\hat{\mathbf{x}}_0(t),\, \mathbf{c}_{\text{text}}\right),
+    \label{eq:sas}
+\end{equation}
+where $\text{CLIP\_sim}$ denotes the cosine similarity between CLIP image and text embeddings~\citep{radford2021learning}. SAS reveals how semantic content emerges across the denoising process.
+
+\subsection{Selective Conditioning Intervention}
+
+Beyond passive measurement, we perform active interventions by applying CFG only within specific timestep windows. We partition the 50 DDIM steps into three phases:
+\begin{itemize}[nosep, leftmargin=*]
+    \item \textbf{Early phase} (steps 0--20, high noise): coarse structure formation.
+    \item \textbf{Mid phase} (steps 20--35, medium noise): semantic content crystallization.
+    \item \textbf{Late phase} (steps 35--50, low noise): fine detail refinement.
+\end{itemize}
+For each prompt, we generate images under five conditions: full conditioning, early-only, mid-only, late-only, and no conditioning. We evaluate results both qualitatively (visual inspection) and quantitatively (CLIP score between generated image and prompt).
+
+\subsection{Experimental Setup}
+
+We use Stable Diffusion 1.5~\citep{rombach2022high} with DDIM scheduling (50 steps), guidance scale $w = 7.5$, and image resolution $512 \times 512$. All experiments use a fixed random seed for reproducibility. For CIS and SAS, we evaluate across 8 diverse text prompts. For TS, we use 4 pairs of semantically related prompts differing in one attribute (color, object, or scene). CLIP similarity is computed using ViT-B/32~\citep{radford2021learning}.
+
+% ===========================================================================
+\section{Preliminary Results}
+\label{sec:results}
+% ===========================================================================
+
+\subsection{Conditioning Influence Score}
+
+Figure~\ref{fig:cis} shows the CIS across all 50 denoising steps, averaged over 8 prompts. The CIS exhibits a characteristic pattern: it starts at moderate values in the earliest (noisiest) steps, rises through the early-to-mid denoising phase, and then declines as the process approaches the clean image. This suggests that conditioning exerts its strongest \emph{instantaneous} influence during the intermediate noise regime, where the model transitions from coarse layout to semantic content. At very high noise, the signal is largely obscured; at very low noise, the image structure is already largely determined.
+
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/cis_curve.pdf}
+        \caption{CIS across denoising steps (mean $\pm$ std over 8 prompts).}
+        \label{fig:cis}
+    \end{subfigure}\hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/cis_multi_guidance.pdf}
+        \caption{CIS under guidance scales $w \in \{3, 7.5, 15\}$.}
+        \label{fig:gs}
+    \end{subfigure}
+    \caption{Conditioning Influence Score analysis. (a)~CIS peaks in the early-to-mid denoising phase, indicating conditioning exerts its strongest instantaneous influence at intermediate noise levels. (b)~Higher guidance scales amplify CIS uniformly but preserve the temporal profile, confirming that the noise-level dependence is a structural property.}
+    \label{fig:cis_combined}
+\end{figure}
+
+\subsection{Selective Conditioning Intervention}
+
+Table~\ref{tab:selective} reports CLIP scores for images generated under selective conditioning. Full conditioning achieves the highest average CLIP score (0.255). Mid-phase conditioning (0.194) outperforms both early-only (0.166) and late-only (0.153), indicating the mid denoising phase is where conditioning most effectively shapes semantic content. The no-conditioning baseline (0.094) shows that some apparent alignment arises from unconditional priors.
+
+\begin{table}[t]
+\centering
+\small
+\caption{CLIP scores (image--text similarity) under selective conditioning. Higher is better.}
+\label{tab:selective}
+\vspace{2pt}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Prompt (abbreviated) & Full & Early & Mid & Late & None \\
+\midrule
+Cat on windowsill     & \textbf{0.307} & 0.108 & 0.166 & 0.228 & 0.148 \\
+Red sports car        & \textbf{0.291} & 0.228 & 0.109 & 0.079 & 0.019 \\
+Watercolor sunset     & 0.203 & 0.141 & \textbf{0.273} & 0.143 & 0.072 \\
+Astronaut on horse    & 0.217 & 0.188 & \textbf{0.227} & 0.161 & 0.136 \\
+\midrule
+\textbf{Average}      & \textbf{0.255} & 0.166 & 0.194 & 0.153 & 0.094 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Trajectory Sensitivity and Semantic Alignment}
+
+Figure~\ref{fig:ts_sas} presents trajectory sensitivity and semantic alignment results. The trajectory divergence (Fig.~\ref{fig:ts}) between semantically related prompt pairs starts at zero (identical initial noise) and increases monotonically, as expected: once the two trajectories separate, the L2 distance accumulates. The curve rises only slowly in the first few steps (high noise), then increases at a roughly sustained rate through the mid and late phases. Thus the \emph{cumulative} divergence does not by itself show a single ``fastest'' phase---the slope is relatively uniform in the mid-to-late range. What the plot does show is that (i)~conditioning differences have little effect in the very early steps (flat start), and (ii)~divergence then builds up over the rest of the process. To identify which steps contribute most \emph{per step}, one would plot the per-step marginal divergence $\Delta\text{TS}(t) = \text{TS}(t) - \text{TS}(t-1)$; we leave that for extended analysis. The semantic alignment score (Fig.~\ref{fig:sas}) rises steeply in the early phase and plateaus by the mid phase, confirming that prompt-aligned content emerges early and is subsequently refined.
+
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/trajectory_sensitivity.pdf}
+        \caption{Trajectory divergence between paired prompts.}
+        \label{fig:ts}
+    \end{subfigure}\hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/sas_curve.pdf}
+        \caption{Semantic Alignment Score across steps.}
+        \label{fig:sas}
+    \end{subfigure}
+    \caption{(a)~Trajectory Sensitivity: cumulative L2 divergence between prompt pairs sharing initial noise. Divergence grows slowly at first, then at a roughly sustained rate. (b)~SAS: CLIP similarity between predicted $\hat{\mathbf{x}}_0(t)$ and prompt. Alignment emerges rapidly in early steps.}
+    \label{fig:ts_sas}
+\end{figure}
+
+% ===========================================================================
+\section{Discussion}
+\label{sec:discussion}
+% ===========================================================================
+
+\paragraph{Novelty.}
+This work provides the first systematic, quantitative framework for measuring how conditioning effectiveness varies with noise level during diffusion model inference. Rather than proposing new architectures or training objectives, we focus on understanding an implicit assumption shared by most conditional diffusion approaches: that conditioning should be applied uniformly throughout inference.
+
+\paragraph{Advantages.}
+Our framework is \emph{model-agnostic}: the three metrics (CIS, TS, SAS) can be applied to any conditional diffusion model without modification or retraining. The approach yields actionable insights for inference-time optimization---for example, selectively disabling conditioning in regimes where it has minimal effect could reduce computational cost without sacrificing quality. The consistency of our findings across diverse prompts and guidance scales suggests generalizability.
+
+\paragraph{Limitations.}
+Our analysis is limited to inference-time behavior and does not explain why certain noise-level dependencies arise during training. The CLIP-based SAS metric inherits known biases and limitations of CLIP~\citep{radford2021learning}, including reduced sensitivity to spatial relationships and counting. We evaluate only text-conditioned generation; extending to structural conditioning signals (e.g., ControlNet~\citep{zhang2023adding}) is planned for the final report. Finally, our current experiments use a single model (SD 1.5) and sampling schedule (DDIM, 50 steps); broader model and scheduler comparisons would strengthen generalizability claims.
+
+\paragraph{Next steps.}
+For the final report, we plan to: (i) extend the analysis to ControlNet-style structural conditioning; (ii) evaluate additional models (SD 2.1, SDXL); (iii) propose and evaluate simple time-dependent conditioning schedules as a lightweight inference-time optimization.
+
+% ===========================================================================
+\bibliographystyle{plainnat}
+\begin{thebibliography}{10}
+
+\bibitem[Ho et~al.(2020)]{ho2020denoising}
+Jonathan Ho, Ajay Jain, and Pieter Abbeel.
+\newblock Denoising diffusion probabilistic models.
+\newblock In \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2020.
+
+\bibitem[Song et~al.(2021a)]{song2021denoising}
+Jiaming Song, Chenlin Meng, and Stefano Ermon.
+\newblock Denoising diffusion implicit models.
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2021.
+
+\bibitem[Song et~al.(2021b)]{song2021scorebased}
+Yang Song, Jascha Sohl-Dickstein, Diederik~P. Kingma, Abhishek Kumar, Stefano Ermon, and Ben Poole.
+\newblock Score-based generative modeling through stochastic differential equations.
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2021.
+
+\bibitem[Rombach et~al.(2022)]{rombach2022high}
+Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick Esser, and Bj\"{o}rn Ommer.
+\newblock High-resolution image synthesis with latent diffusion models.
+\newblock In \emph{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, pages 10684--10695, 2022.
+
+\bibitem[Ho and Salimans(2022)]{ho2022classifier}
+Jonathan Ho and Tim Salimans.
+\newblock Classifier-free diffusion guidance.
+\newblock \emph{arXiv preprint arXiv:2207.12598}, 2022.
+
+\bibitem[Hertz et~al.(2022)]{hertz2022prompt}
+Amir Hertz, Ron Mokady, Jay Tenenbaum, Kfir Aberman, Yael Pritch, and Daniel Cohen-Or.
+\newblock Prompt-to-prompt image editing with cross attention control.
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2023.
+
+\bibitem[Zhang et~al.(2023)]{zhang2023adding}
+Lvmin Zhang, Anyi Rao, and Maneesh Agrawala.
+\newblock Adding conditional control to text-to-image diffusion models.
+\newblock In \emph{Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)}, 2023.
+
+\bibitem[Radford et~al.(2021)]{radford2021learning}
+Alec Radford, Jong~Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen Krueger, and Ilya Sutskever.
+\newblock Learning transferable visual models from natural language supervision.
+\newblock In \emph{International Conference on Machine Learning (ICML)}, 2021.
+
+\end{thebibliography}
+
+\end{document}
