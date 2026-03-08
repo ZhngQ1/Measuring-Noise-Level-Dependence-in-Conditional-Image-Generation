@@ -1,0 +1,90 @@
+{
+  "A photograph of a cat sitting on a windowsill": {
+    "full": {
+      "clip_score": 0.3595450222492218,
+      "struct_score": 0.3851421337323052
+    },
+    "early_only": {
+      "clip_score": 0.3566385507583618,
+      "struct_score": 0.20228030339629935
+    },
+    "mid_only": {
+      "clip_score": 0.3608216345310211,
+      "struct_score": 0.17491492464754496
+    },
+    "late_only": {
+      "clip_score": 0.36504924297332764,
+      "struct_score": 0.2079309636326279
+    },
+    "none": {
+      "clip_score": 0.35919228196144104,
+      "struct_score": 0.09559103002660585
+    }
+  },
+  "A red sports car on a mountain road": {
+    "full": {
+      "clip_score": 0.31063318252563477,
+      "struct_score": 0.45216561149633205
+    },
+    "early_only": {
+      "clip_score": 0.3412178158760071,
+      "struct_score": 0.09133109825737759
+    },
+    "mid_only": {
+      "clip_score": 0.2795909643173218,
+      "struct_score": 0.0362223023600593
+    },
+    "late_only": {
+      "clip_score": 0.3305114507675171,
+      "struct_score": 0.03094929500019638
+    },
+    "none": {
+      "clip_score": 0.32037293910980225,
+      "struct_score": 0.022585438335809806
+    }
+  },
+  "A watercolor painting of a sunset over the ocean": {
+    "full": {
+      "clip_score": 0.3057299256324768,
+      "struct_score": 0.32810841701363375
+    },
+    "early_only": {
+      "clip_score": 0.254414439201355,
+      "struct_score": 0.036751409424529306
+    },
+    "mid_only": {
+      "clip_score": 0.32628729939460754,
+      "struct_score": 0.024101589495507947
+    },
+    "late_only": {
+      "clip_score": 0.31848084926605225,
+      "struct_score": 0.11582094802567935
+    },
+    "none": {
+      "clip_score": 0.31855547428131104,
+      "struct_score": 0.01713333862140081
+    }
+  },
+  "An astronaut riding a horse on the moon": {
+    "full": {
+      "clip_score": 0.0859578549861908,
+      "struct_score": 0.47638167217760985
+    },
+    "early_only": {
+      "clip_score": 0.11541053652763367,
+      "struct_score": 0.06805696416497634
+    },
+    "mid_only": {
+      "clip_score": 0.2551501989364624,
+      "struct_score": 0.0624633799280154
+    },
+    "late_only": {
+      "clip_score": 0.26173484325408936,
+      "struct_score": 0.1132938221210456
+    },
+    "none": {
+      "clip_score": 0.28839975595474243,
+      "struct_score": 0.05321410829607551
+    }
+  }
+}
